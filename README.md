@@ -5,7 +5,7 @@
 ```
 git clone https://github.com/karukador/sounder_bot.git
 ```
-2) Установите requirements
+2) Установите зависимости из `requirements.txt`
 3) Установите DB Browser  
 4) Получите токен через [BotFather](https://telegram.me/BotFather) в Telegram 
 5) Откройте терминал и подключитесь к своей виртуальной машине:  
