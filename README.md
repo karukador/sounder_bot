@@ -24,8 +24,8 @@ curl -H Metadata-Flavor:Google 169.254.169.254/computeMetadata/v1/instance/servi
 8) В файле `.env` вставьте ваш TOKEN, iam_token, folder_id:
 ```
 TOKEN = "ВАШ_ТОКЕН"
-iam_token = "ВАШ_IAM-ТОКЕН"
-folder_id = "ВАШ_FOLDER_ID"
+IAM_TOKEN = "ВАШ_IAM-ТОКЕН"
+FOLDER_ID = "ВАШ_FOLDER_ID"
 ```
 9) Измените данные в файле system_config.py (по желанию)  
 10) Запустите файл bot.py  
