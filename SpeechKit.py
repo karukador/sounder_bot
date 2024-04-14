@@ -1,22 +1,17 @@
 import requests
-from dotenv import load_dotenv
-from os import getenv
-from system_config import URL, voice
+from system_config import URL, VOICE, LANGUAGE
+from config import FOLDER_ID, IAM_TOKEN
 import logging
-
-load_dotenv()
-folder_id = getenv("folder_id")
-iam_token = getenv("iam_token")
 
 
 def text_to_speech(text):
     headers = {
-        'Authorization': f'Bearer {iam_token}'}
+        'Authorization': f'Bearer {IAM_TOKEN}'}
     data = {
         'text': text,
-        'lang': 'ru-RU',
-        'voice': voice,
-        'folderId': folder_id}
+        'lang': LANGUAGE,
+        'voice': VOICE,
+        'folderId': FOLDER_ID}
     response = requests.post(URL, headers=headers, data=data)
 
     if response.status_code == 200:
