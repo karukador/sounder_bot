@@ -1,8 +1,9 @@
 import sqlite3
 import logging
+from system_config import DB_NAME
 
 
-def create_table(db_name="speech_kit.db"):
+def create_table(db_name=DB_NAME):
     try:
         # Создаём подключение к базе данных
         with sqlite3.connect(db_name) as conn:
@@ -22,7 +23,7 @@ def create_table(db_name="speech_kit.db"):
         logging.debug(f"Error: {e}")
 
 
-def process_query(query, params, db_name="speech_kit.db"):
+def process_query(query, params, db_name="DB_NAME"):
     connection = sqlite3.connect(db_name)  # Устанавливаем соединение с базой данных
     connection.row_factory = sqlite3.Row  # Устанавливаем формат возвращаемых данных
     cur = connection.cursor()
@@ -40,7 +41,7 @@ def process_query(query, params, db_name="speech_kit.db"):
     connection.close()  # Закрываем соединение
 
 
-def insert_row(user_id, message, tts_symbols, db_name="speech_kit.db"):
+def insert_row(user_id, message, tts_symbols, db_name="DB_NAME"):
     try:
         # Подключаемся к базе
         with sqlite3.connect(db_name) as conn:
@@ -54,7 +55,7 @@ def insert_row(user_id, message, tts_symbols, db_name="speech_kit.db"):
         logging.debug(f"Error: {e}")
 
 
-def count_all_symbol(user_id, db_name="speech_kit.db"):
+def count_all_symbol(user_id, db_name=DB_NAME):
     try:
         # Подключаемся к базе
         with sqlite3.connect(db_name) as conn:
