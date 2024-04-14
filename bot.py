@@ -3,34 +3,19 @@ import logging
 from database import create_table, insert_row, count_all_symbol
 from speechkit import text_to_speech
 from telebot.types import BotCommand, BotCommandScope, ReplyKeyboardMarkup
-from system_config import admin_id, MAX_USER_TTS_SYMBOLS, MAX_TTS_SYMBOLS
-from dotenv import load_dotenv
-from os import getenv
+from system_config import ADMIN_ID, MAX_USER_TTS_SYMBOLS, MAX_TTS_SYMBOLS, CONTENT_TYPES
+from config import TOKEN
+from text import help_message, manual_message
 
-load_dotenv()
-TOKEN = getenv("TOKEN")
-admin_id = int(admin_id)
 bot = telebot.TeleBot(token=TOKEN)
-
-# Создание таблицы в БД
-create_table()
-
-# Настройка логирования
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H",
-    filename="log_file.log",
-    filemode="w",
-    force=True)
 
 
 # Команда /debug с доступом только для админов
-@bot.message_handler(commands=['debug'])
+@bot.message_handler(commands=["debug"])
 def send_logs(message):
     user_id = message.chat.id
 
-    if user_id == admin_id:
+    if user_id == ADMIN_ID:
         try:
 
             with open("log_file.txt", "rb") as f:
@@ -49,14 +34,7 @@ def send_logs(message):
 main_menu_keyboard = ReplyKeyboardMarkup(resize_keyboard=True).add("📊 Статистика", "🗣️ Озвучить")
 
 
-# Команда /start
-@bot.message_handler(commands=["start"])
-def send_welcome(message):
-    logging.info("Отправка приветственного сообщения")
-    bot.reply_to(
-        message,
-        "Привет! Я бот озвучки текста с помощью SpeechKit. Нажми на кнопку '🗣️ Озвучить' и введи текст для озвучки.",
-        reply_markup=main_menu_keyboard)
+def register_comands(message):
     commands = [  # Установка списка команд с областью видимости и описанием
         BotCommand('start', 'запуск бота'),
         BotCommand('help', 'основная информация о боте'),
@@ -65,19 +43,21 @@ def send_welcome(message):
     BotCommandScope('private', chat_id=message.chat.id)
 
 
+# Команда /start
+@bot.message_handler(commands=["start"])
+def send_welcome(message):
+    logging.info("Отправка приветственного сообщения")
+    bot.reply_to(
+        message,
+        'Привет! Я бот озвучки текста с помощью SpeechKit. Нажми на кнопку "🗣️ Озвучить" и введи текст для озвучки.',
+        reply_markup=main_menu_keyboard)
+    register_comands(message)
+
+
 # команда /help
 @bot.message_handler(commands=["help"])
 def about_bot(message):
-    bot.send_message(message.chat.id, 'Так как я использую платные ресурсы для взаимодействия с нейросетью, то у вас '
-                                      '<b>ограниченное количество</b> символов для озвучки.\n\n'
-                                      '<b>Что такое SpeechKit?</b>\n'
-                                      '<b>SpeechKit</b> - это набор инструментов для работы с естественным языком, '
-                                      'разработанный компанией Яндекс. Он включает в себя распознавание речи, '
-                                      'синтез речи, а также API для управления устройствами через голосовые '
-                                      'команды.\n\n'
-                                      'Информацию о том, сколько ресурсов вы уже потратили, вы сможете найти, нажав '
-                                      'на кнопку <b>"📊 Статистика"</b>.\n'
-                                      '<b>🗣️ Озвучить</b> - начните озвучивать текст.',
+    bot.send_message(message.chat.id, help_message,
                      reply_markup=main_menu_keyboard, parse_mode="html")
 
 
@@ -85,16 +65,7 @@ def about_bot(message):
 @bot.message_handler(commands=['tts'])
 def tts_handler(message):
     user_id = message.from_user.id
-    bot.send_message(user_id, 'Отправляйте текст строго на выбранном языке. Также, для большего очеловеченья аудио '
-                              'можно использовать следующее:\n\n'
-                              'Для ударения поставьте "+". Например:\nЯ хочу сделать удар+ение на букву е.\n\n'
-                              'Для того, чтобы сделать акцент используйте "** **". Например: \nЯ хочу '
-                              '**акцентировать**.\n\n'
-                              'sil<[300]> - добавляет паузу длительностью в 300 миллисекунд. Например:\n А вот здесь '
-                              'sil<[300]> сделаем паузу.\n\n'
-                              '<[tiny]>, <[small]>, <[medium]>, <[large]>, <[huge]> также указывает на паузу '
-                              'различной длительности.\n\n'
-                              '⏸️ Паузы помогут сделать речь более разделенной и понятной.')
+    bot.send_message(user_id, manual_message)
     bot.send_message(user_id, 'Отправь следующим сообщением текст, чтобы я его озвучил!')
     bot.register_next_step_handler(message, tts)
 
@@ -118,7 +89,7 @@ def send_stats(message):
 @bot.message_handler(commands=['tts'])
 def tts_handler(message):
     user_id = message.from_user.id
-    bot.send_message(user_id, 'Отправь следующим сообщеним текст, чтобы я его озвучил!')
+    bot.send_message(user_id, 'Отправь следующим сообщением текст, чтобы я его озвучил!')
     bot.register_next_step_handler(message, tts)
 
 
@@ -130,7 +101,7 @@ def tts(message):
     # Проверка, что сообщение действительно текстовое
     if message.content_type != 'text':
         bot.send_message(user_id, 'Отправь текстовое сообщение')
-        return
+        bot.register_next_step_handler(message, tts)
 
         # Считаем символы в тексте и проверяем сумму потраченных символов
     text_symbol = is_tts_symbol_limit(message, text)
@@ -176,16 +147,21 @@ def is_tts_symbol_limit(message, text):
     return len(text)
 
 
-CONTENT_TYPES = ["text", "audio", "document", "photo", "sticker", "video", "video_note", "voice"]
-
-
 @bot.message_handler(content_types=CONTENT_TYPES)
 def any_msg(message):
     bot.send_message(message.chat.id, 'Если хотите озвучить текст, то сначала нажмите на кнопку "🗣️ Озвучить"',
                      reply_markup=main_menu_keyboard)
 
 
-# запуск бота 🎉
 if __name__ == "__main__":
+    # Настройка логирования
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H",
+        filename="log_file.log",
+        filemode="w",
+        force=True)
+    create_table()  # Создание таблицы в БД
+    bot.infinity_polling()  # запуск бота 🎉
     logging.info("Бот запущен")
-    bot.infinity_polling()
